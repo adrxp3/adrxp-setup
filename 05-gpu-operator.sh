@@ -17,8 +17,17 @@ if ! nvidia-smi > /dev/null 2>&1; then
     echo "Secure Boot is ON, which blocks the NVIDIA driver. Turn it off in the BIOS, then run this again."
     exit 1
   fi
-  echo "NVIDIA driver is not working yet. Installing the recommended server driver..."
-  ubuntu-drivers install --gpgpu
+  echo "NVIDIA driver is not working yet. Installing a driver..."
+  driver_installed() { dpkg -l 'nvidia-driver-*' 2> /dev/null | grep '^ii' > /dev/null; }
+  ubuntu-drivers install --gpgpu || true
+  if ! driver_installed; then
+    echo "No server driver for this card. Installing the recommended driver instead..."
+    ubuntu-drivers install || true
+  fi
+  if ! driver_installed; then
+    echo "No NVIDIA driver could be installed. Run:  ubuntu-drivers devices"
+    exit 1
+  fi
   echo
   echo "Driver installed. REBOOT now (sudo reboot), then run this same command again."
   exit 0
